@@ -20,6 +20,7 @@ bin/
 target/
 build/
 dist/
+out/
 
 # Log files
 *.log
