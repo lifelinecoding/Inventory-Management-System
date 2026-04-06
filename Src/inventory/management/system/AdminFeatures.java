@@ -74,7 +74,10 @@ public class AdminFeatures {
         supplierBtn.setFont(new Font("SansSerif", Font.BOLD, 20));
         supplierBtn.setBackground(new Color(122, 21, 127));
         supplierBtn.setForeground(Color.WHITE);
-        supplierBtn.addActionListener(null);
+        supplierBtn.addActionListener(e -> {
+            frame.dispose();
+            new SupplierManagement();
+        });
         sidebar.add(supplierBtn);
 
         Button salePurchaseBtn = new Button(btnMenu[4]);
