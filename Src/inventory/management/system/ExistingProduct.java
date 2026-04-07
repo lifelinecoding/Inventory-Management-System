@@ -15,7 +15,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -25,10 +24,9 @@ import javax.swing.JTextField;
 
 public class ExistingProduct extends JFrame {
 
-    JTextField productNameField, productIdField;
+    JTextField productNameField, productIdField, category;
     JTextArea description;
     Button addProduct, clear, updateProduct, back, search, removeProduct;
-    JComboBox<String> category;
     JPanel imagePanel;
     Canvas imgCanvas;
 
@@ -96,7 +94,7 @@ public class ExistingProduct extends JFrame {
         categorylbl.setBounds(40, 210, 250, 30);
         form.add(categorylbl);
 
-        category = new JComboBox<String>(new String[] { "Select", "Hardware", "Grocery", "Shoes" });
+        category = new JTextField(35);
         category.setFont(new Font("SansSerif", Font.BOLD, 16));
         category.setBackground(Color.WHITE);
         category.setForeground(Color.BLACK);
@@ -218,8 +216,8 @@ public class ExistingProduct extends JFrame {
                 // ! ------------ Will check in future what details are needed to perform this
                 // operations.
                 String productName = productNameField.getText().trim();
-                String productId = productIdField.getText().trim();
-                String categoryinfo = category.getSelectedItem().toString().trim();
+                // String productId = productIdField.getText().trim();
+                String categoryinfo = category.getText().trim();
                 String prodDescription = description.getText().trim();
 
                 // ! ------------- Input validations ----------------------
@@ -248,8 +246,8 @@ public class ExistingProduct extends JFrame {
 
                 // ! Will check in future what details are needed to perform this action.
                 String productName = productNameField.getText().trim();
-                String productId = productIdField.getText().trim();
-                String categoryinfo = category.getSelectedItem().toString().trim();
+                // String productId = productIdField.getText().trim();
+                String categoryinfo = category.getText().trim();
                 String prodDescription = description.getText().trim();
 
                 if (prodDescription.isEmpty() || productName.isEmpty() || categoryinfo.isEmpty()) {
@@ -278,7 +276,7 @@ public class ExistingProduct extends JFrame {
                 // TODO: Fetch Data from database of a product and display on the screen.
 
                 productNameField.setText("To be fetched from database");
-                category.setSelectedItem("To be fetched from database");
+                category.setText("To be fetched from database");
                 description.setText("To be fetched from database");
                 return;
             }
@@ -289,7 +287,7 @@ public class ExistingProduct extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 productNameField.setText("");
                 productIdField.setText("");
-                category.setSelectedIndex(0);
+                category.setText("");;
                 description.setText("");
                 statuslbl.setText("");
                 return;

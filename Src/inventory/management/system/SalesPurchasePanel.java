@@ -37,9 +37,12 @@ public class SalesPurchasePanel extends JPanel {
     private static final String[] PURCHASE_HISTORY_COLS = {
             "ID", "Supplier ID", "Supplier", "Category", "Product", "Qty", "Price/Unit", "Selling Price", "Total", "Date"
     };
+    private static final String[] SALES_HISTORY_COLS = {
+            "ID", "Customer ID", "Customer", "Category", "Product", "Qty", "Selling Price", "Total", "Date", "Sold By"
+    };
 
     private final DefaultTableModel purchaseHistoryModel;
-    private int nextPurchaseTxnId = 1;
+    private final DefaultTableModel salesHistoryModel;
 
     private JTabbedPane mainTabs;
 
@@ -59,6 +62,7 @@ public class SalesPurchasePanel extends JPanel {
 
     public SalesPurchasePanel() {
         purchaseHistoryModel = createNonEditableTableModel(PURCHASE_HISTORY_COLS);
+        salesHistoryModel = createNonEditableTableModel(SALES_HISTORY_COLS);
 
         setLayout(new BorderLayout());
         setBackground(BG_DARK);
@@ -114,7 +118,7 @@ public class SalesPurchasePanel extends JPanel {
         JLabel lblQty = makeFormLabel("Quantity");
         JLabel lblPrice = makeFormLabel("Price per Unit");
         JLabel lblSellingPrice = makeFormLabel("Selling Price");
-        JLabel lblDate = makeFormLabel("Date (dd/MM/yyyy)");
+        JLabel lblDate = makeFormLabel("Date (dd/mm/yyyy)");
 
         JTextField tfSupplierId = makeField();
         JTextField tfSupplier = makeField();
@@ -184,12 +188,8 @@ public class SalesPurchasePanel extends JPanel {
             double unit = Double.parseDouble(priceStr);
             double selling = Double.parseDouble(sellingPriceStr);
             double total = qty * unit;
-            int suppId = Integer.parseInt(supplierIdStr);
-            int txnId = nextPurchaseTxnId++;
-            purchaseHistoryModel.addRow(new Object[] {
-                    txnId, suppId, supplier, category, product, qty,
-                    formatRupee(unit), formatRupee(selling), formatRupee(total), dateStr
-            });
+            //! int suppId = Integer.parseInt(supplierIdStr);
+
             clearAfterPurchase(tfSupplierId, tfSupplier, cbCategory, cbProduct, tfQty, tfPrice, tfSellingPrice, tfDate);
             JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(this),
                     "Purchase recorded successfully.\nSupplier ID: " + supplierIdStr + "\nSupplier: " + supplier
@@ -197,6 +197,8 @@ public class SalesPurchasePanel extends JPanel {
                             + formatRupee(selling) + "\nTotal: " + formatRupee(total),
                     "Success", JOptionPane.INFORMATION_MESSAGE);
             mainTabs.setSelectedIndex(1);
+
+            // TODO: Save the purchase details into database.
         });
         panel.add(submit, gbc);
 
@@ -204,11 +206,15 @@ public class SalesPurchasePanel extends JPanel {
     }
 
     private JPanel buildPurchaseHistoryTab() {
+        // TODO: To load the purchase data from the database. For demo, new purchases in this session are shown here.
+        // !DEMO: purchaseHistoryModel.addRow(new Object[] {1, "52VCD23", "Aditya Patel", "Hardware", "Laptop",  25, 45000, 60000, 45000*25, "12/12/2025" });
         return tableInScrollPane(purchaseHistoryModel);
     }
 
     private JPanel buildSalesHistoryTab() {
-        return tableInScrollPane(EmployeeSalesPanel.getSharedSalesHistoryModel());
+        // TODO: To load the sales data from the database and store it into the sales history model.
+        //! DEMO: salesHistoryModel.addRow(new Object[] {1, "52VCD23", "Aditya Patel", "Hardware", "Laptop",  25, 60000, 45000*25, "12/12/2025" });
+        return tableInScrollPane(salesHistoryModel);
     }
 
     private JPanel tableInScrollPane(DefaultTableModel model) {
@@ -357,10 +363,10 @@ public class SalesPurchasePanel extends JPanel {
             return fieldLabel + " is required.";
         }
         try {
-            int id = Integer.parseInt(idStr);
-            if (id <= 0) {
-                return fieldLabel + " must be a positive whole number.";
-            }
+            // int id = Integer.parseInt(idStr);
+            // if (id <= 0) {
+            //     return fieldLabel + " must be a positive whole number.";
+            // }
         } catch (NumberFormatException ex) {
             return fieldLabel + " must be a valid whole number.";
         }
@@ -397,10 +403,10 @@ public class SalesPurchasePanel extends JPanel {
             return "Date is required.";
         }
         if (!DATE_PATTERN.matcher(dateStr).matches()) {
-            return "Date must be in dd/MM/yyyy format.";
+            return "Date must be in dd/mm/yyyy format.";
         }
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/mm/yyyy");
             sdf.setLenient(false);
             sdf.parse(dateStr);
         } catch (Exception ex) {

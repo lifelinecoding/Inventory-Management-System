@@ -2,7 +2,6 @@ package inventory.management.system;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -18,15 +17,10 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
 
 /**
  * Employee-facing sales form (New Sale only).
@@ -34,15 +28,6 @@ import javax.swing.table.JTableHeader;
  */
 public class EmployeeSalesPanel extends JPanel {
 
-    private static final String[] SALES_HISTORY_COLS = {
-            "ID", "Cust ID", "Customer", "Category", "Product", "Qty", "Selling Price", "Total", "Date"
-    };
-
-    /** Single in-memory ledger for all embedded sales UIs (demo). */
-    private static DefaultTableModel sharedSalesHistoryModel;
-    private static int sharedNextSaleTxnId = 1;
-
-    private final DefaultTableModel salesHistoryModel;
     private JTabbedPane mainTabs;
 
     private static final Color BG_DARK = new Color(15, 23, 42);
@@ -51,7 +36,6 @@ public class EmployeeSalesPanel extends JPanel {
     private static final Color ACCENT2 = new Color(99, 102, 241);
     private static final Color TEXT_WHITE = new Color(241, 245, 249);
     private static final Color INPUT_BG = new Color(51, 65, 85);
-    private static final Color TABLE_HEADER_BLUE = new Color(37, 99, 235);
     private static final Font FONT_LABEL = new Font("SansSerif", Font.BOLD, 16);
     private static final Font FONT_FIELD = new Font("SansSerif", Font.PLAIN, 15);
     private static final Font FONT_TITLE = new Font("SansSerif", Font.BOLD, 22);
@@ -60,7 +44,6 @@ public class EmployeeSalesPanel extends JPanel {
     private static final Pattern DATE_PATTERN = Pattern.compile("^\\d{2}/\\d{2}/\\d{4}$");
 
     public EmployeeSalesPanel() {
-        salesHistoryModel = getSharedSalesHistoryModel();
 
         setLayout(new BorderLayout());
         setBackground(BG_DARK);
@@ -80,18 +63,6 @@ public class EmployeeSalesPanel extends JPanel {
         mainTabs.addTab("New Sale", wrapTab(buildNewSaleTab()));
 
         add(mainTabs, BorderLayout.CENTER);
-    }
-
-    public static synchronized DefaultTableModel getSharedSalesHistoryModel() {
-        if (sharedSalesHistoryModel == null) {
-            sharedSalesHistoryModel = new DefaultTableModel(SALES_HISTORY_COLS, 0) {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
-        }
-        return sharedSalesHistoryModel;
     }
 
     private JPanel wrapTab(JPanel inner) {
@@ -115,7 +86,7 @@ public class EmployeeSalesPanel extends JPanel {
         JLabel lblProduct = makeFormLabel("Product Name");
         JLabel lblQty = makeFormLabel("Quantity");
         JLabel lblPrice = makeFormLabel("Selling Price");
-        JLabel lblDate = makeFormLabel("Date (dd/MM/yyyy)");
+        JLabel lblDate = makeFormLabel("Date (dd/mm/yyyy)");
 
         JTextField tfCustomerId = makeField();
         JTextField tfCustomer = makeField();
@@ -161,11 +132,13 @@ public class EmployeeSalesPanel extends JPanel {
                 return;
             }
             if (ProductCatalog.isPlaceholder(category)) {
-                JOptionPane.showMessageDialog(this, "Please select a category.", "Validation", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Please select a category.", "Validation",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
             if (ProductCatalog.isPlaceholder(product)) {
-                JOptionPane.showMessageDialog(this, "Please select a product.", "Validation", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Please select a product.", "Validation",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
             String err = validateSaleRest(customer, qtyStr, priceStr, dateStr);
@@ -176,15 +149,7 @@ public class EmployeeSalesPanel extends JPanel {
             int qty = Integer.parseInt(qtyStr);
             double price = Double.parseDouble(priceStr);
             double total = qty * price;
-            int custId = Integer.parseInt(customerIdStr);
-            int txnId;
-            synchronized (EmployeeSalesPanel.class) {
-                txnId = sharedNextSaleTxnId++;
-            }
-            salesHistoryModel.addRow(new Object[] {
-                    txnId, custId, customer, category, product, qty,
-                    formatRupee(price), formatRupee(total), dateStr
-            });
+            //! int custId = Integer.parseInt(customerIdStr);
             clearAfterSale(tfCustomerId, tfCustomer, cbCategory, cbProduct, tfQty, tfPrice, tfDate);
             JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(this),
                     "Sale recorded successfully.\nCustomer ID: " + customerIdStr + "\nCustomer: " + customer
@@ -192,59 +157,12 @@ public class EmployeeSalesPanel extends JPanel {
                             + formatRupee(total),
                     "Success", JOptionPane.INFORMATION_MESSAGE);
             mainTabs.setSelectedIndex(0);
+
+            // TODO: Save the sales data into database.
         });
         panel.add(submit, gbc);
 
         return panel;
-    }
-
-    private JPanel tableInScrollPane(DefaultTableModel model) {
-        JPanel holder = new JPanel(new BorderLayout());
-        holder.setBackground(BG_DARK);
-
-        JTable table = new JTable(model);
-        table.setFont(FONT_FIELD);
-        table.setForeground(TEXT_WHITE);
-        table.setBackground(BG_CARD);
-        table.setGridColor(new Color(71, 85, 105));
-        table.setRowHeight(26);
-        table.setFillsViewportHeight(true);
-
-        styleTableHeader(table);
-
-        DefaultTableCellRenderer left = new DefaultTableCellRenderer();
-        left.setBackground(BG_CARD);
-        left.setForeground(TEXT_WHITE);
-        left.setFont(FONT_FIELD);
-        for (int c = 0; c < table.getColumnCount(); c++) {
-            table.getColumnModel().getColumn(c).setCellRenderer(left);
-        }
-
-        JScrollPane scroll = new JScrollPane(table);
-        scroll.setBorder(BorderFactory.createLineBorder(ACCENT2, 1));
-        scroll.getViewport().setBackground(BG_CARD);
-        holder.add(scroll, BorderLayout.CENTER);
-        return holder;
-    }
-
-    private void styleTableHeader(JTable table) {
-        JTableHeader header = table.getTableHeader();
-        header.setBackground(TABLE_HEADER_BLUE);
-        header.setForeground(Color.WHITE);
-        header.setFont(new Font("SansSerif", Font.BOLD, 14));
-        header.setReorderingAllowed(false);
-        DefaultTableCellRenderer hr = new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
-                Component comp = super.getTableCellRendererComponent(t, v, sel, foc, r, c);
-                comp.setBackground(TABLE_HEADER_BLUE);
-                comp.setForeground(Color.WHITE);
-                comp.setFont(new Font("SansSerif", Font.BOLD, 14));
-                setHorizontalAlignment(SwingConstants.CENTER);
-                return comp;
-            }
-        };
-        header.setDefaultRenderer(hr);
     }
 
     private void addFormRow(JPanel panel, GridBagConstraints gbc, int row, JLabel label, JTextField field) {
@@ -328,10 +246,10 @@ public class EmployeeSalesPanel extends JPanel {
             return fieldLabel + " is required.";
         }
         try {
-            int id = Integer.parseInt(idStr);
-            if (id <= 0) {
-                return fieldLabel + " must be a positive whole number.";
-            }
+            // int id = Integer.parseInt(idStr);
+            // if (id <= 0) {
+            //     return fieldLabel + " must be a positive whole number.";
+            // }
         } catch (NumberFormatException ex) {
             return fieldLabel + " must be a valid whole number.";
         }
@@ -368,10 +286,10 @@ public class EmployeeSalesPanel extends JPanel {
             return "Date is required.";
         }
         if (!DATE_PATTERN.matcher(dateStr).matches()) {
-            return "Date must be in dd/MM/yyyy format.";
+            return "Date must be in dd/mm/yyyy format.";
         }
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/mm/yyyy");
             sdf.setLenient(false);
             sdf.parse(dateStr);
         } catch (Exception ex) {
@@ -383,4 +301,5 @@ public class EmployeeSalesPanel extends JPanel {
     private static String formatRupee(double amount) {
         return String.format(Locale.US, "₹%,.2f", amount);
     }
+
 }

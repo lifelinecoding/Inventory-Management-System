@@ -15,7 +15,6 @@ import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -24,10 +23,9 @@ import javax.swing.JTextField;
 
 public class AddProduct extends JFrame {
 
-    JTextField productNameField, productIdField;
+    JTextField productNameField, productIdField, category;
     JTextArea description;
     Button addProduct, clear, existingProduct, back;
-    JComboBox<String> category;
     JPanel imagePanel;
     Canvas imgCanvas;
 
@@ -95,7 +93,7 @@ public class AddProduct extends JFrame {
         categorylbl.setBounds(40, 180, 250, 30);
         form.add(categorylbl);
 
-        category = new JComboBox<String>(new String[] { "Select", "Hardware", "Grocery", "Shoes" });
+        category = new JTextField(35);
         category.setFont(new Font("SansSerif", Font.BOLD, 16));
         category.setBackground(Color.WHITE);
         category.setForeground(Color.BLACK);
@@ -202,7 +200,7 @@ public class AddProduct extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 String productName = productNameField.getText().trim();
                 String productId = productIdField.getText().trim();
-                String categoryinfo = category.getSelectedItem().toString().trim();
+                String categoryinfo = category.getText().trim();
                 String prodDescription = description.getText().trim();
 
                 //! ------------- Input validations ----------------------
@@ -229,7 +227,7 @@ public class AddProduct extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 productNameField.setText("");
                 productIdField.setText("");
-                category.setSelectedIndex(0);
+                category.setText("");
                 description.setText("");
                 statuslbl.setText("");
                 return;

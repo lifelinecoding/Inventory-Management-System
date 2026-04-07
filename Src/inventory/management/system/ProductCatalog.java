@@ -15,10 +15,11 @@ public final class ProductCatalog {
     private static final Map<String, String[]> BY_CATEGORY = new LinkedHashMap<>();
 
     static {
+        // TODO: To load the all possible categories stored from database
         BY_CATEGORY.put("Hardware",
-                new String[] { "Drill Machine", "Hammer", "Screwdriver Set", "LED Bulb Pack", "USB-C Cable" });
-        BY_CATEGORY.put("Shoes", new String[] { "Running Shoes", "Formal Shoes", "Sports Shoes", "Sandals" });
-        BY_CATEGORY.put("Grocery", new String[] { "Rice 10kg", "Wheat Flour 10kg", "Cooking Oil 5L", "Milk 1L" });
+                new String[] { /* // TODO: Fetch product category wise from database */});
+        BY_CATEGORY.put("Shoes", new String[] { /* // TODO: Fetch product category wise from database */ });
+        BY_CATEGORY.put("Grocery", new String[] { /* // TODO: Fetch product category wise from database */ });
     }
 
     private ProductCatalog() {
