@@ -164,6 +164,7 @@ public class SalesPurchasePanel extends JPanel {
 
         JTextField tfSupplierId = makeField();
         JTextField tfSupplier = makeField();
+        tfSupplier.setEditable(false);
         JComboBox<String> cbCategory = makeCombo(ProductCatalog.categoryComboItems());
         JComboBox<String> cbProductId = makeCombo(new String[] { ProductCatalog.PLACEHOLDER });
         cbCategory.addItemListener(e -> {
@@ -346,10 +347,9 @@ public class SalesPurchasePanel extends JPanel {
     }
 
     private JPanel buildSalesHistoryTab() {
-        // TODO: To load the sales data from the database and store it into the sales
-        // history model.
-        // ! DEMO: salesHistoryModel.addRow(new Object[] {1, "52VCD23", "Aditya Patel",
-        // ! "Hardware", "Laptop", 25, 60000, 45000*25, "12/12/2025" });
+
+        loadSalesHistory();
+
         return tableInScrollPane(salesHistoryModel);
     }
 
@@ -378,7 +378,7 @@ public class SalesPurchasePanel extends JPanel {
                         res.getString("PRODUCT_NAME"),
                         res.getString("CATEGORY"),
                         res.getString("DESCRIPTION"),
-                        res.getString("QUANTITY"),
+                        res.getInt("QUANTITY"),
                         res.getDouble("PURCHASE_UNIT_PRICE"),
                         res.getDouble("SELLING_UNIT_PRICE"),
                 });
@@ -400,7 +400,7 @@ public class SalesPurchasePanel extends JPanel {
                     +
                     "INNER JOIN SUPPLIER\n" +
                     "INNER JOIN PRODUCT\n" +
-                    "WHERE PURCHASE.SUPPLIER_ID = SUPPLIER.SUPPLIER_ID AND PURCHASE.PRODUCT_ID = PRODUCT.PRODUCT_ID;";
+                    "WHERE PURCHASE.SUPPLIER_ID = SUPPLIER.SUPPLIER_ID AND PURCHASE.PRODUCT_ID = PRODUCT.PRODUCT_ID  ORDER BY SERIAL_NO ASC;";
 
             PreparedStatement psStmt = conn.prepareStatement(fetchPurchaseHistoryQuery);
             ResultSet res = psStmt.executeQuery();
@@ -411,7 +411,7 @@ public class SalesPurchasePanel extends JPanel {
                         res.getString("SUPPLIER_ID"),
                         res.getString("SUPPLIER_NAME"),
                         res.getString("CATEGORY"),
-                        res.getString("SUPPLIER_NAME"),
+                        res.getString("PRODUCT_NAME"),
                         res.getString("QUANTITY"),
                         res.getDouble("UNIT_PRICE"),
                         res.getDouble("SELLING_UNIT_PRICE"),
@@ -422,6 +422,42 @@ public class SalesPurchasePanel extends JPanel {
 
             conn.close();
             return;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadSalesHistory() {
+        salesHistoryModel.setRowCount(0);
+        try {
+            Connection conn = DBConnection.getConnection();
+            String loadSalesDataQuery = "SELECT SALES.*, CUSTOMER.CUSTOMER_NAME, PRODUCT.PRODUCT_NAME, EMPLOYEE.EMPLOYEE_NAME FROM SALES\n"
+                    +
+                    "INNER JOIN CUSTOMER\n" +
+                    "INNER JOIN PRODUCT\n" +
+                    "INNER JOIN EMPLOYEE\n" +
+                    "WHERE SALES.PRODUCT_ID = PRODUCT.PRODUCT_ID AND SALES.CUSTOMER_ID = CUSTOMER.CUSTOMER_ID AND SALES.SELLER_EMAIL = EMPLOYEE.EMAIL;";
+
+            PreparedStatement psStmt = conn.prepareStatement(loadSalesDataQuery);
+            ResultSet res = psStmt.executeQuery();
+
+            while (res.next()) {
+                salesHistoryModel.addRow(new Object[] {
+                        res.getInt("SERIAL_NO"),
+                        res.getString("CUSTOMER_ID"),
+                        res.getString("CUSTOMER_NAME"),
+                        res.getString("CATEGORY"),
+                        res.getString("PRODUCT_NAME"),
+                        res.getInt("QUANTITY"),
+                        res.getDouble("SELLING_UNIT_PRICE"),
+                        res.getInt("QUANTITY") * res.getDouble("SELLING_UNIT_PRICE"),
+                        res.getString("DATE"),
+                        res.getString("EMPLOYEE_NAME")
+                });
+            }
+
+            conn.close();
 
         } catch (Exception e) {
             e.printStackTrace();

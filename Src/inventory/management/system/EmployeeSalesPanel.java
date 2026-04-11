@@ -11,11 +11,12 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
@@ -45,6 +46,8 @@ public class EmployeeSalesPanel extends JPanel {
     private JTabbedPane mainTabs;
     JLabel heading;
     String Username, Password;
+    boolean found;
+    int availableQuantity = 0;
 
     private static final Color BG_DARK = new Color(15, 23, 42);
     private static final Color BG_CARD = new Color(30, 41, 59);
@@ -149,18 +152,101 @@ public class EmployeeSalesPanel extends JPanel {
         JLabel lblCustomerId = makeFormLabel("Customer ID");
         JLabel lblCustomer = makeFormLabel("Customer Name");
         JLabel lblCategory = makeFormLabel("Category");
-        JLabel lblProduct = makeFormLabel("Product Name");
+        JLabel lblProduct = makeFormLabel("Product ID");
         JLabel lblQty = makeFormLabel("Quantity");
         JLabel lblPrice = makeFormLabel("Selling Price");
         JLabel lblDate = makeFormLabel("Date (dd/mm/yyyy)");
 
         JTextField tfCustomerId = makeField();
         JTextField tfCustomer = makeField();
+        tfCustomer.setEditable(false);
         JComboBox<String> cbCategory = makeCombo(ProductCatalog.categoryComboItems());
-        JComboBox<String> cbProduct = makeCombo(new String[] { ProductCatalog.PLACEHOLDER });
+        JComboBox<String> cbProductId = makeCombo(new String[] { ProductCatalog.PLACEHOLDER });
+
+        JTextField tfQty = makeField();
+        JTextField tfPrice = makeField();
+        tfPrice.setEditable(false);
+        JTextField tfDate = makeField();
+
         cbCategory.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
-                ProductCatalog.refreshProductCombo(cbProduct, cbCategory.getSelectedItem());
+                ProductCatalog.refreshProductCombo(cbProductId, cbCategory.getSelectedItem());
+            }
+        });
+
+        tfCustomerId.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String customerId = tfCustomerId.getText().trim();
+                    if (customerId.length() != 12 || !customerId.startsWith("CUS-BGB-")
+                            || !customerId.matches("^[A-Z]{3}-[A-Z]{3}-[0-9]{4}$")) {
+
+                        JOptionPane.showMessageDialog(panel, "Invalid Customer ID", "Validation",
+                                JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    try {
+                        Connection conn = DBConnection.getConnection();
+                        String getSupplierNameQuery = "SELECT CUSTOMER_NAME FROM CUSTOMER WHERE CUSTOMER_ID = ?";
+                        PreparedStatement psStmt = conn.prepareStatement(getSupplierNameQuery);
+                        psStmt.setString(1, customerId);
+
+                        ResultSet res = psStmt.executeQuery();
+                        if (res.next()) {
+                            tfCustomer.setText(res.getString("CUSTOMER_NAME").trim());
+                            return;
+
+                        } else {
+                            JOptionPane.showMessageDialog(panel, "Customer does not exist. Please register first.",
+                                    "Not found",
+                                    JOptionPane.INFORMATION_MESSAGE);
+                            return;
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        final int[] foundIndex = new int[] { -1 };
+
+        cbProductId.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                String id = cbProductId.getSelectedItem().toString().trim();
+                if (id.equals("— Select —")) {
+                    return;
+                }
+
+                if (productDetailsModel == null || productDetailsModel.getRowCount() == 0) {
+                    JOptionPane.showMessageDialog(panel,
+                            "No Product data available. Load or list the product first.",
+                            "No data", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                found = false;
+                for (int i = 0; i < productDetailsModel.getRowCount(); i++) {
+                    Object val = productDetailsModel.getValueAt(i, 0);
+                    if (val != null && id.equals(val.toString())) {
+                        // populate fields from model columns (match columns in show panel)
+                        tfPrice.setText(safeToString(productDetailsModel.getValueAt(i, 6)));
+                        Object qtyObj = productDetailsModel.getValueAt(i, 4);
+                        availableQuantity = Integer.parseInt(qtyObj.toString());
+
+                        foundIndex[0] = i;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    JOptionPane.showMessageDialog(panel, "Product with ID '" + id + "' not found.", "Not found",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    foundIndex[0] = -1;
+                    return;
+                }
             }
         });
 
@@ -178,15 +264,11 @@ public class EmployeeSalesPanel extends JPanel {
             }
         });
 
-        JTextField tfQty = makeField();
-        JTextField tfPrice = makeField();
-        JTextField tfDate = makeField();
-
         int row = 0;
         addFormRow(panel, gbc, row++, lblCustomerId, tfCustomerId);
         addFormRow(panel, gbc, row++, lblCustomer, tfCustomer);
         addFormRow(panel, gbc, row++, lblCategory, cbCategory);
-        addFormRow(panel, gbc, row++, lblProduct, cbProduct);
+        addFormRow(panel, gbc, row++, lblProduct, cbProductId);
         addFormRow(panel, gbc, row++, lblQty, tfQty);
         addFormRow(panel, gbc, row++, lblPrice, tfPrice);
         addFormRow(panel, gbc, row++, lblDate, tfDate);
@@ -201,7 +283,7 @@ public class EmployeeSalesPanel extends JPanel {
             String customerIdStr = tfCustomerId.getText().trim();
             String customer = tfCustomer.getText().trim();
             String category = String.valueOf(cbCategory.getSelectedItem());
-            String product = String.valueOf(cbProduct.getSelectedItem());
+            String productId = String.valueOf(cbProductId.getSelectedItem());
             String qtyStr = tfQty.getText().trim();
             String priceStr = tfPrice.getText().trim();
             String dateStr = tfDate.getText().trim();
@@ -216,7 +298,7 @@ public class EmployeeSalesPanel extends JPanel {
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            if (ProductCatalog.isPlaceholder(product)) {
+            if (ProductCatalog.isPlaceholder(productId)) {
                 JOptionPane.showMessageDialog(this, "Please select a product.", "Validation",
                         JOptionPane.WARNING_MESSAGE);
                 return;
@@ -226,14 +308,61 @@ public class EmployeeSalesPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, err, "Validation", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            int qty = Integer.parseInt(qtyStr);
-            double price = Double.parseDouble(priceStr);
-            double total = qty * price;
-            clearAfterSale(tfCustomerId, tfCustomer, cbCategory, cbProduct, tfQty, tfPrice, tfDate);
+            int qty = 0;
+            double price = 0;
+            try {
+                qty = Integer.parseInt(qtyStr);
+                price = Double.parseDouble(priceStr);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(panel, "Invalid Quantity of Price", "Validation",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if (qty > availableQuantity) {
+                JOptionPane.showMessageDialog(panel, "Only " + availableQuantity + " items are in the stock",
+                        "Out of Stock", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
 
             mainTabs.setSelectedIndex(0);
 
-            // TODO: Save the sales data into database.
+            try {
+                Connection conn = DBConnection.getConnection();
+                String storeSalesDetailQuery = "INSERT INTO SALES (CUSTOMER_ID, CATEGORY, PRODUCT_ID, QUANTITY, SELLING_UNIT_PRICE, DATE, SELLER_EMAIL) VALUES (?, ?, ?, ?, ?, ?, ?);";
+                String updateProductStockQuery = "UPDATE PRODUCT_QUANTITY SET QUANTITY = COALESCE(QUANTITY, 0) - ? WHERE PRODUCT_ID = ? AND COALESCE(QUANTITY, 0) >= ?";
+
+                PreparedStatement psStmt = conn.prepareStatement(storeSalesDetailQuery);
+                psStmt.setString(1, customerIdStr);
+                psStmt.setString(2, category);
+                psStmt.setString(3, productId);
+                psStmt.setInt(4, qty);
+                psStmt.setDouble(5, price);
+                psStmt.setString(6, dateStr);
+                psStmt.setString(7, this.Username);
+
+                PreparedStatement psStmt1 = conn.prepareStatement(updateProductStockQuery);
+                psStmt1.setInt(1, qty);
+                psStmt1.setString(2, productId);
+                psStmt1.setInt(3, qty);
+
+                int affectedRows = psStmt.executeUpdate();
+                psStmt1.executeUpdate();
+
+                if (affectedRows > 0) {
+                    JOptionPane.showMessageDialog(panel, "Product Sold Successfully", "Sales",
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
+                conn.close();
+
+                loadProductData();
+                clearAfterSale(tfCustomerId, tfCustomer, cbCategory, cbProductId, tfQty, tfPrice, tfDate);
+
+                return;
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         });
 
         panel.add(submit, gbc);
@@ -315,7 +444,7 @@ public class EmployeeSalesPanel extends JPanel {
                         res.getString("PRODUCT_NAME"),
                         res.getString("CATEGORY"),
                         res.getString("DESCRIPTION"),
-                        res.getString("QUANTITY"),
+                        res.getInt("QUANTITY"),
                         res.getDouble("PURCHASE_UNIT_PRICE"),
                         res.getDouble("SELLING_UNIT_PRICE"),
                 });
@@ -389,17 +518,19 @@ public class EmployeeSalesPanel extends JPanel {
                 return;
             }
 
-            int age = 0 ;
+            int age = 0;
 
             try {
                 age = Integer.parseInt(ageStr);
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(panel, "Age should be a positive number", "Warning", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Age should be a positive number", "Warning",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            if(age < 0){
-                JOptionPane.showMessageDialog(panel, "Age should be a positive number", "Warning", JOptionPane.WARNING_MESSAGE);
+            if (age < 0) {
+                JOptionPane.showMessageDialog(panel, "Age should be a positive number", "Warning",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -587,6 +718,11 @@ public class EmployeeSalesPanel extends JPanel {
         panel.add(combo, gbc);
     }
 
+    // ! -------- small helpers used by the sales panel --------------
+    private String safeToString(Object o) {
+        return o == null ? "" : o.toString();
+    }
+
     private JLabel makeFormLabel(String text) {
         JLabel l = new JLabel(text);
         l.setFont(FONT_LABEL);
@@ -625,11 +761,11 @@ public class EmployeeSalesPanel extends JPanel {
     }
 
     private void clearAfterSale(JTextField tfCustomerId, JTextField tfCustomer, JComboBox<String> cbCategory,
-            JComboBox<String> cbProduct, JTextField tfQty, JTextField tfPrice, JTextField tfDate) {
+            JComboBox<String> cbProductId, JTextField tfQty, JTextField tfPrice, JTextField tfDate) {
         tfCustomerId.setText("");
         tfCustomer.setText("");
         cbCategory.setSelectedIndex(0);
-        ProductCatalog.refreshProductCombo(cbProduct, cbCategory.getSelectedItem());
+        ProductCatalog.refreshProductCombo(cbProductId, cbCategory.getSelectedItem());
         tfQty.setText("");
         tfPrice.setText("");
         tfDate.setText("");

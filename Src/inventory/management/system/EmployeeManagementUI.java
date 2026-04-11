@@ -129,9 +129,14 @@ public class EmployeeManagementUI extends JFrame implements ActionListener {
         table.setFont(new Font("SansSerif", Font.BOLD, 14));
         table.setForeground(Color.WHITE);
         table.setBackground(getForeground());
-        table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 18));
+        table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 16));
         table.getTableHeader().setBackground(new Color(56, 189, 248));
         table.getTableHeader().setForeground(Color.WHITE);
+
+        // table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        table.getColumnModel().getColumn(3).setPreferredWidth(20);
+        table.getColumnModel().getColumn(4).setPreferredWidth(200);
+        table.getColumnModel().getColumn(6).setPreferredWidth(45);
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.getViewport().setBackground(new Color(30, 41, 59));

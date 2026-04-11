@@ -6,7 +6,7 @@ import java.awt.*;
 public class AdminFeatures {
 
     public AdminFeatures() {
-        //! ----------------------- Frame ---------------------------
+        // ! ----------------------- Frame ---------------------------
         JFrame frame = new JFrame("Inventory Management System - Admin");
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -16,7 +16,7 @@ public class AdminFeatures {
         frame.setIconImage(image.getImage());
         frame.getContentPane().setBackground(new Color(14, 9, 41));
 
-        //!------------------- HEADER -------------------------
+        // !------------------- HEADER -------------------------
         JPanel header = new JPanel();
         header.setBackground(new Color(15, 23, 42));
         header.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -27,20 +27,20 @@ public class AdminFeatures {
         header.add(title, JPanel.CENTER_ALIGNMENT);
         frame.add(header, BorderLayout.NORTH);
 
-        //! ---------------------- SIDEBAR ---------------------------
+        // ! ---------------------- SIDEBAR ---------------------------
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new GridLayout(7, 1, 5, 5));
         sidebar.setPreferredSize(new Dimension(300, 0));
         sidebar.setBackground(new Color(30, 30, 60));
 
         String[] btnMenu = {
-            "Dashboard",
-            "Employee Management",
-            "Product Management",
-            "Suppliers",
-            "Purchases",
-            "Reports",
-            "Log Out"
+                "Dashboard",
+                "Employee Management",
+                "Product Management",
+                "Suppliers",
+                "Purchases",
+                "Reports",
+                "Log Out"
         };
 
         Button dashboardBtn = new Button(btnMenu[0]);
@@ -54,8 +54,8 @@ public class AdminFeatures {
         employeeMgmtBtn.setBackground(new Color(122, 21, 127));
         employeeMgmtBtn.setForeground(Color.WHITE);
         employeeMgmtBtn.addActionListener(e -> {
-            frame.dispose();
             new EmployeeManagementUI();
+            frame.dispose();
         });
         sidebar.add(employeeMgmtBtn);
 
@@ -64,8 +64,8 @@ public class AdminFeatures {
         proStockMgmtBtn.setBackground(new Color(42, 21, 127));
         proStockMgmtBtn.setForeground(Color.WHITE);
         proStockMgmtBtn.addActionListener(e -> {
-            frame.dispose();;
             new AddProduct();
+            frame.dispose();
         });
         sidebar.add(proStockMgmtBtn);
 
@@ -74,8 +74,8 @@ public class AdminFeatures {
         supplierBtn.setBackground(new Color(122, 21, 127));
         supplierBtn.setForeground(Color.WHITE);
         supplierBtn.addActionListener(e -> {
-            frame.dispose();
             new SupplierManagement();
+            frame.dispose();
         });
         sidebar.add(supplierBtn);
 
@@ -97,8 +97,8 @@ public class AdminFeatures {
         logOutBtn.setBackground(new Color(42, 21, 127));
         logOutBtn.setForeground(Color.WHITE);
         logOutBtn.addActionListener(e -> {
-            frame.dispose();
             new LoginFrame();
+            frame.dispose();
         });
         sidebar.add(logOutBtn);
 
@@ -107,23 +107,73 @@ public class AdminFeatures {
         // ! ── Main content area: swap views from sidebar (CardLayout) ─────────────
         final JPanel contentPanel = new JPanel(new CardLayout());
         contentPanel.setBackground(new Color(30, 30, 60));
-
         JPanel dashboardHomePanel = new JPanel(new BorderLayout());
         dashboardHomePanel.setBackground(new Color(30, 30, 60));
-        JLabel welcome = new JLabel("Welcome to Admin Dashboard", JLabel.CENTER);
-        welcome.setFont(new Font("SansSerif", Font.BOLD, 28));
+
+        // Main content container
+        JPanel content = new JPanel();
+        content.setBackground(new Color(30, 30, 60));
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+
+        // Title
+        JLabel welcome = new JLabel("Welcome to Admin Dashboard");
+        welcome.setFont(new Font("SansSerif", Font.BOLD, 32));
         welcome.setForeground(Color.WHITE);
-        dashboardHomePanel.add(welcome, BorderLayout.CENTER);
+        welcome.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Subtitle
+        JLabel subtitle = new JLabel("Inventory Management System");
+        subtitle.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        subtitle.setForeground(new Color(180, 180, 200));
+        subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Info content
+        JLabel info = new JLabel(
+                "<html><div style='width:500px;height:400px; text-align:left; display: flex; justify-content: center; align-items: center;'>"
+                        + "<br>Manage your entire inventory system efficiently from one place.<br><br><br><br>"
+                        + "• Add, update and manage products<br><br>"
+                        + "• Track stock levels and availability<br><br>"
+                        + "• Manage employees and suppliers<br><br>"
+                        + "• Monitor purchases and sales<br><br>"
+                        + "• Generate reports for business insights<br><br><br><br>"
+                        + "Use the sidebar to navigate through different modules."
+                        + "</div></html>");
+
+        info.setFont(new Font("SansSerif", Font.PLAIN, 20));
+        // info.setForeground(new Color(200, 200, 220));
+        info.setForeground(Color.WHITE);
+        info.setAlignmentX(Component.CENTER_ALIGNMENT);
+        info.setHorizontalAlignment(SwingConstants.CENTER);
+
+        // Footer note
+        JLabel footerNote = new JLabel("System Status: All services running smoothly");
+        footerNote.setFont(new Font("SansSerif", Font.ITALIC, 13));
+        footerNote.setForeground(new Color(140, 140, 160));
+        footerNote.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Add spacing
+        content.add(Box.createVerticalStrut(40));
+        content.add(welcome);
+        content.add(Box.createVerticalStrut(10));
+        content.add(subtitle);
+        content.add(Box.createVerticalStrut(55));
+        content.add(info);
+        content.add(Box.createVerticalStrut(30));
+        content.add(footerNote);
+
+        // Add to panel
+        dashboardHomePanel.add(content, BorderLayout.CENTER);
 
         contentPanel.add(dashboardHomePanel, "HOME");
         contentPanel.add(new SalesPurchasePanel(), "SALES_PURCHASE");
 
         dashboardBtn.addActionListener(e -> ((CardLayout) contentPanel.getLayout()).show(contentPanel, "HOME"));
-        salePurchaseBtn.addActionListener(e -> ((CardLayout) contentPanel.getLayout()).show(contentPanel, "SALES_PURCHASE"));
+        salePurchaseBtn
+                .addActionListener(e -> ((CardLayout) contentPanel.getLayout()).show(contentPanel, "SALES_PURCHASE"));
 
         frame.add(contentPanel, BorderLayout.CENTER);
 
-        //! ----------------- FOOTER ------------------------------
+        // ! ----------------- FOOTER ------------------------------
         JPanel footer = new JPanel();
         footer.setBackground(Color.GRAY);
         JLabel footText = new JLabel("© 2026 Inventory Management System");
