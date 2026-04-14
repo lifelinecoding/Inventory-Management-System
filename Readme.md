@@ -153,7 +153,6 @@ java LoginFrame
 
 ## 📸 Screenshots
 
-*Add your screenshots here*
 ![Front Page](Screenshots/image.png)
 ![Purchase Page](Screenshots/image-1.png)
 
@@ -162,6 +161,9 @@ java LoginFrame
 ## 👨‍💻 Author
 
 **Aditya Patel**
+**Ravi Kishan Gaur**
+**Vishal Singh**
+**Satya Narayan**
 Computer Science Student
 Project: Inventory Management System
 
